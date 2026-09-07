@@ -28,10 +28,10 @@ environ.Env.read_env(env_file=os.path.join(BASE_DIR, '.env'))
 SECRET_KEY = ENV('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = ENV.bool('DEBUG', default=False)
 
-ALLOWED_HOSTS = ['localhost', 'beta.farmfills.com', 'www.beta.farmfills.com', 'app.farmfills.com', 'www.app.farmfills.com']
-CSRF_TRUSTED_ORIGINS = ['localhost', 'beta.farmfills.com', 'www.beta.farmfills.com', 'app.farmfills.com', 'www.app.farmfills.com']
+ALLOWED_HOSTS = ENV.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1'])
+CSRF_TRUSTED_ORIGINS = ENV.list('CSRF_TRUSTED_ORIGINS', default=[])
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # Application definition
@@ -60,6 +60,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -97,16 +98,23 @@ CRISPY_TEMPLATE_PACK = 'bootstrap4'
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': ENV('DATABASE_NAME'),
-        'USER': ENV('DATABASE_USER'),
-        'PASSWORD': ENV('DATABASE_PASS'),
-        'HOST': ENV('DATABASE_HOST'),
-        'PORT': ENV('DATABASE_PORT')
+# Prefer a single DATABASE_URL (postgres://user:pass@host:port/name) when set,
+# otherwise fall back to the individual DATABASE_* variables.
+if ENV('DATABASE_URL', default=None):
+    DATABASES = {
+        'default': ENV.db('DATABASE_URL')
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': ENV('DATABASE_NAME'),
+            'USER': ENV('DATABASE_USER'),
+            'PASSWORD': ENV('DATABASE_PASS'),
+            'HOST': ENV('DATABASE_HOST'),
+            'PORT': ENV('DATABASE_PORT')
+        }
+    }
 
 
 # Password validation
@@ -148,7 +156,9 @@ SESSION_COOKIE_AGE = 7890000
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
 STATIC_URL = '/static/'
-STATIC_ROOT = '/home/farmfills/static/assets'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 STATICFILES_DIRS = (
     os.path.join(BASE_DIR, "static"),
