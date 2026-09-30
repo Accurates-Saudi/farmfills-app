@@ -4,7 +4,8 @@ from django.utils import timezone
 
 # Use this function to get a specific date's (default: today) delivery list
 def daily_delivery_query(date=None, route_id=None):
-    today = date or timezone.localdate().strftime('%Y-%m-%d')
+    # date can be a 'YYYY-MM-DD' string or a date object (get_order_list passes a date)
+    today = str(date or timezone.localdate())
     weekday = datetime.strptime(today, '%Y-%m-%d').strftime('%a').lower()  # 'mon', 'tue', etc.
     weekly_field = {
         'mon': 'weekly_mon',
