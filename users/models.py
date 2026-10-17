@@ -548,6 +548,11 @@ class Delivery(models.Model):
     km = models.DecimalField(max_digits=20, decimal_places=2, null=True)
     km_variation = models.DecimalField(max_digits=20, decimal_places=2, null=True)
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['delivery_boy', 'date'], name='unique_delivery_per_boy_per_day'),
+        ]
+
 
 # dispatch model
 class Dispatch(models.Model):

@@ -4,6 +4,7 @@ from django.shortcuts import redirect, render
 from farmfills_admin.business import daily_delivery_query
 from users.models import Staff, User, ExtraLess, Vacation, Subscription, Delivery, RouteAssign, Route, Product
 from users.views import get_client_ip, getQuantityOfDate, getEndBalanceOfMonth, last_day_of_month, format_number
+from django.db import IntegrityError
 from django.db.models import Q, Sum
 import pytz
 from .models import DeliveryData
@@ -615,9 +616,13 @@ def start_delivery(request):
                 delivery.start_time = timezone.localtime(timezone.now()).time()
                 delivery.save()
                 return redirect('delivery_list')
-            except:
-                delivery = Delivery(date=timezone.localtime(timezone.now()).date(), start_time=timezone.localtime(timezone.now()).time(), route=staff.route, packets=packets, delivery_boy=staff, km=staff.km)
-                delivery.save()
+            except Delivery.DoesNotExist:
+                try:
+                    delivery = Delivery(date=timezone.localtime(timezone.now()).date(), start_time=timezone.localtime(timezone.now()).time(), route=staff.route, packets=packets, delivery_boy=staff, km=staff.km)
+                    delivery.save()
+                except IntegrityError:
+                    # a second tap already created today's delivery
+                    pass
                 return redirect('delivery_list')
         else:
             return redirect('delivery_list')
